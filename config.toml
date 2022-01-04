@@ -1,0 +1,43 @@
+[preprocessing]
+file_types = ["flac", "mp3"]
+source = "../datasets/vctk/VCTK-Corpus-0.92/wav48_silence_trimmed"
+destination = "dataset/vctk/mel_22050_1024_256_72_48_16.h5"
+hdf_label_key = 'keys'
+sr = 22050
+keep_wave = false
+category_level = 0
+
+
+
+[preprocessing.features]
+# Types of features include the following:
+# mel - mel spectrogram (n_bins, chunk_size)
+# stft - short-time fourier transform (1 + n_fft/2, chunk_size)
+# cqt - constant q transform (n_bins, chunk_size)
+# none - none (set keep_wave to true for waveform data)
+type = 'mel'
+
+# number of fft bins
+n_fft = 1024
+
+# size of window (probably best be same as n_fft)
+win_length = 1024
+
+# Number of audio frames between windows
+hop_size = 256
+
+# number of bins (chroma bins in cqt, mel bins for mel)
+n_bins = 80
+
+# Number of time frames per datum (duration between frames = chunk_size * hop_size / sr)
+chunk_size = 48
+
+# Number of overlapping time frames between adjacent datum
+overlap = 16
+
+# Right pads last datum with zeros if true
+padding = true
+
+
+
+[model]

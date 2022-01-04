@@ -1,0 +1,16 @@
+toml==0.10.2
+librosa==0.8.1
+numpy==1.20.3
+jupyter==1.0.0
+pandas==1.3.5
+tables==3.7.0
+tqdm==4.62.3 # not really necessary, but good for sanity
+
+# Install pytorch seperately
+# pip3 install torch torchvision torchaudio
+#torch==1.10.1
+#torchaudio==0.10.1
+#torchvision==0.11.2
+
+# optional dependencies for demo
+ipython==7.30.1
