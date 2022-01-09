@@ -1,12 +1,20 @@
 [preprocessing]
+# Input Settings
 file_types = ["flac", "mp3"]
 source = "../datasets/vctk/VCTK-Corpus-0.92/wav48_silence_trimmed"
-destination = "dataset/vctk/mel_22050_1024_256_72_48_16.h5"
+category_level = 0 # distance from source to category folder level
+
+# Output Settings
+destination = "dataset/vctk/mel_22050_2048_512_80_72_36.h5"
 hdf_label_key = 'keys'
+
+# Preprocessing Parameters
 sr = 22050
 keep_wave = false
-category_level = 0
 
+# Data Culling
+min_sequence = 4
+min_category_count = 20
 
 
 [preprocessing.features]
@@ -18,22 +26,22 @@ category_level = 0
 type = 'mel'
 
 # number of fft bins
-n_fft = 1024
+n_fft = 2048
 
 # size of window (probably best be same as n_fft)
-win_length = 1024
+win_length = 2048
 
 # Number of audio frames between windows
-hop_size = 256
+hop_size = 512
 
 # number of bins (chroma bins in cqt, mel bins for mel)
 n_bins = 80
 
 # Number of time frames per datum (duration between frames = chunk_size * hop_size / sr)
-chunk_size = 48
+chunk_size = 72
 
 # Number of overlapping time frames between adjacent datum
-overlap = 16
+overlap = 36
 
 # Right pads last datum with zeros if true
 padding = true

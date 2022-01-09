@@ -6,6 +6,7 @@ import librosa
 from tqdm import tqdm
 
 from config import CONFIG
+from utilities import MovingAverage
 
 def process_file(filename):
     """
@@ -49,7 +50,7 @@ def process_file(filename):
                 raise Exception()
 
             # compute number of chunks
-            num_chunks = -((overlap - s.shape[1]) // chunk_hop)
+            num_chunks = max(1, -((overlap - s.shape[1]) // chunk_hop))
 
             # pad data (or alternatively truncate data)
             if padding:
@@ -81,7 +82,7 @@ def process_file(filename):
     return pd.DataFrame(df)
 
 
-def process_files(dbdir=CONFIG['preprocessing']['source'], file_cap=None):
+def process_files(dbdir=CONFIG['preprocessing']['source'], file_cap=None, min_sequence=CONFIG['preprocessing']['min_sequence']):
     """
     iterates over audio files in a given directory and combines features into dataframe
     """
@@ -97,20 +98,29 @@ def process_files(dbdir=CONFIG['preprocessing']['source'], file_cap=None):
     
     # Iterate over files
     dfs = []
-    i = 0
-    for f in tqdm(files, desc='Computing Features', smoothing=0.1):
-        try:
-            # Get features from file
-            _df = process_file(f)
+    mu = MovingAverage()
+    with tqdm(files, desc='Computing Features', smoothing=0.1) as pbar:
+        for f in pbar:
+            try:
+                # Get features from file
+                _df = process_file(f)
 
-            # Add file path as a column
-            _df['file'] = [os.path.relpath(f, dbdir)]
+                #print(_df.iloc[0]['magnitude'].shape[0] < min_sequence, _df.iloc[0]['magnitude'].shape[0], min_sequence)
 
-            dfs += [_df]
-        except Exception as e:
-            raise e
-        i += 1
-        if file_cap is not None and i >= file_cap: break
+                # skip sequences shorter than the minimum sequence length
+                if _df.iloc[0]['magnitude'].shape[0] < min_sequence:
+                    pbar.set_postfix(valid=mu.add(0))
+                    continue
+                else:
+                    pbar.set_postfix(valid=mu.add(1))
+
+                # Add file path as a column
+                _df['file'] = [os.path.relpath(f, dbdir)]
+
+                dfs += [_df]
+            except Exception as e:
+                raise e
+            if file_cap is not None and i >= file_cap: break
     # Return the concatenation of all the files
     return pd.concat(dfs, ignore_index=True)
 
@@ -122,7 +132,7 @@ def get_directory(path, pos=CONFIG['preprocessing']['category_level']):
     return os.path.normpath(path).split(os.path.sep)[pos]
 
 
-def save_hdf(df, dest=CONFIG['preprocessing']['destination']):
+def save_hdf(df, dest=CONFIG['preprocessing']['destination'], min_cat_size=CONFIG['preprocessing']['min_category_count']):
     """
     save dataframe into an hdf5 file
     """
@@ -130,7 +140,8 @@ def save_hdf(df, dest=CONFIG['preprocessing']['destination']):
     label_key = CONFIG['preprocessing']['hdf_label_key']
 
     # find the categories
-    categories = df.apply(lambda x: get_directory(x['file'], category_level), axis=1).drop_duplicates().reset_index(drop=True)
+    counts = df.apply(lambda x: get_directory(x['file']), axis=1).value_counts()
+    categories = pd.DataFrame(counts[counts > min_cat_size].axes[0])[0]
     categories.to_hdf(dest, key=label_key)
 
     # Use a different key per label when saving to file
