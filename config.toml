@@ -47,5 +47,74 @@ overlap = 36
 padding = true
 
 
+[training]
+batch_size = 4
+shuffle = true
+
 
 [model]
+[[model.convolutional_encoder]]
+type = 'conv2d'
+input_channels = 1
+output_channels = 100
+kernel_size = [5, 5]
+stride = [1, 1]
+padding = [2, 2]
+dilation = [1, 1]
+
+[[model.convolutional_encoder]]
+type = 'relu'
+
+[[model.convolutional_encoder]]
+type = 'conv2d'
+input_channels = 100
+output_channels = 100
+kernel_size = [5, 5]
+stride = [1, 1]
+padding = [2, 2]
+dilation = [1, 1]
+
+[[model.convolutional_encoder]]
+type = 'relu'
+
+[[model.convolutional_encoder]]
+type = 'conv2d'
+input_channels = 100
+output_channels = 100
+kernel_size = [3, 3]
+stride = [2, 2]
+padding = [1, 1]
+dilation = [1, 1]
+
+[[model.convolutional_encoder]]
+type = 'relu'
+
+[[model.convolutional_encoder]]
+type = 'residual'
+repeat = 5
+
+    [[model.convolutional_encoder.cell]]
+    type = 'relu'
+
+    [[model.convolutional_encoder.cell]]
+    input_channels = 100
+    output_channels = 100
+    kernel_size = [3, 3]
+    stride = [2, 2]
+    padding = [1, 1]
+    dilation = [1, 1]
+
+    [[model.convolutional_encoder.cell]]
+    type = 'relu'
+
+    [[model.convolutional_encoder.cell]]
+    input_channels = 100
+    output_channels = 100
+    kernel_size = [3, 3]
+    stride = [2, 2]
+    padding = [1, 1]
+    dilation = [1, 1]
+
+[[model.convolutional_encoder]]
+type = 'flatten'
+start_dim = 2
