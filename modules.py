@@ -12,9 +12,12 @@ class LayerFactory:
         self.make = self._make
 
         # filter out only the kwargs needed for the layer function
+        """
         sig = inspect.signature(self.f)
         filter_keys = [param.name for param in sig.parameters.values() if param.kind == param.POSITIONAL_OR_KEYWORD]
         self.f_kwargs = {filter_key: self.kwargs[filter_key] for filter_key in filter_keys if filter_key in self.kwargs}
+        """
+        self.f_kwargs = {key: self.kwargs[key] for key in self.kwargs if key not in ['type', 'repeat']}
 
     class InvalidLayer(Exception):
         pass
@@ -25,14 +28,20 @@ class LayerFactory:
         Static instatiator for a single layer
         """
         type = conf['type']
-        if type == 'conv2d':
+        if type == 'linear':
+            f = nn.Linear
+        elif type == 'conv2d':
             f = nn.Conv2d
+        elif type == 'gru':
+            f = nn.GRU
         elif type == 'relu':
             f = nn.ReLU
+        elif type == 'tanh':
+            f = nn.Tanh
         elif type == 'flatten':
             f = nn.Flatten
         else:
-            raise LayerFactory.InvalidLayer()
+            raise LayerFactory.InvalidLayer(type)
         return LayerFactory(f, **conf).make()
 
     def _make(self):
@@ -59,11 +68,16 @@ class ResidualCell(nn.Module):
 
 
 def parse_config(module_params):
+    """
+    Builds a list of pytorch layers from a list of layer parameters (parsed from a configuration file)
+    """
     layers = []
     for layer_params in module_params:
         type = layer_params['type']
         repeat = 1 if 'repeat' not in layer_params else layer_params['repeat']
         for i in range(repeat):
+            if type == 'sequential': # untested type
+                layers.append(nn.Sequential(*parse_config(layer_params['cell'])))
             if type == 'residual':
                 layers.append(ResidualCell(layer_params['cell']))
             else:

@@ -1,3 +1,4 @@
+# Core dependencies
 toml==0.10.2
 librosa==0.8.1
 numpy==1.20.3
@@ -12,5 +13,12 @@ tqdm==4.62.3 # not really necessary, but good for sanity
 #torchaudio==0.10.1
 #torchvision==0.11.2
 
+# Then install tensorboard seperately
+# setuptools==59.5.0
+# then
+# tensorboard==2.7.0
+
+
 # optional dependencies for demo
 ipython==7.30.1
+torchinfo==1.6.2

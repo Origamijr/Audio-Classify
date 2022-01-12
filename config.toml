@@ -50,74 +50,102 @@ padding = true
 [training]
 batch_size = 4
 shuffle = true
+max_epochs = 100
+log_dir = './logs/'
 
 
-[model]
-stub = false
+# Convolutional Encoder processes 2d spectrogram into
 [[model.convolutional_encoder]]
-type = 'conv2d'
-in_channels = 1
-out_channels = 100
-kernel_size = [5, 5]
-stride = [1, 1]
-padding = [2, 2]
-dilation = [1, 1]
+    type = 'conv2d'
+    in_channels = 1
+    out_channels = 100
+    kernel_size = [5, 5]
+    padding = [2, 2]
 
-[[model.convolutional_encoder]]
-type = 'relu'
-
-[[model.convolutional_encoder]]
-type = 'conv2d'
-in_channels = 100
-out_channels = 100
-kernel_size = [5, 5]
-stride = [1, 1]
-padding = [2, 2]
-dilation = [1, 1]
-
-[[model.convolutional_encoder]]
-type = 'relu'
-
-[[model.convolutional_encoder]]
-type = 'conv2d'
-in_channels = 100
-out_channels = 100
-kernel_size = [3, 3]
-stride = [2, 2]
-padding = [1, 1]
-dilation = [1, 1]
-
-[[model.convolutional_encoder]]
-type = 'relu'
-
-[[model.convolutional_encoder]]
-type = 'residual'
-repeat = 5
-
-    [[model.convolutional_encoder.cell]]
+    [[model.convolutional_encoder]]
     type = 'relu'
 
-    [[model.convolutional_encoder.cell]]
+    [[model.convolutional_encoder]]
+    type = 'conv2d'
+    in_channels = 100
+    out_channels = 100
+    kernel_size = [5, 5]
+    stride = [1, 1]
+    padding = [2, 2]
+
+    [[model.convolutional_encoder]]
+    type = 'relu'
+
+    [[model.convolutional_encoder]]
     type = 'conv2d'
     in_channels = 100
     out_channels = 100
     kernel_size = [3, 3]
     stride = [2, 2]
     padding = [1, 1]
-    dilation = [1, 1]
 
-    [[model.convolutional_encoder.cell]]
+    [[model.convolutional_encoder]]
     type = 'relu'
 
-    [[model.convolutional_encoder.cell]]
+    [[model.convolutional_encoder]]
+    type = 'residual'
+    repeat = 5
+
+        [[model.convolutional_encoder.cell]]
+        type = 'relu'
+
+        [[model.convolutional_encoder.cell]]
+        type = 'conv2d'
+        in_channels = 100
+        out_channels = 100
+        kernel_size = [3, 3]
+        padding = [1, 1]
+
+        [[model.convolutional_encoder.cell]]
+        type = 'relu'
+
+        [[model.convolutional_encoder.cell]]
+        type = 'conv2d'
+        in_channels = 100
+        out_channels = 100
+        kernel_size = [3, 3]
+        padding = [1, 1]
+
+    [[model.convolutional_encoder]]
     type = 'conv2d'
     in_channels = 100
-    out_channels = 100
-    kernel_size = [3, 3]
-    stride = [2, 2]
-    padding = [1, 1]
-    dilation = [1, 1]
+    out_channels = 1
+    kernel_size = [1, 1]
 
-[[model.convolutional_encoder]]
-type = 'flatten'
-start_dim = 2
+    [[model.convolutional_encoder]]
+    type = 'flatten'
+    start_dim = 1
+
+    [[model.convolutional_encoder]]
+    type = 'linear'
+    in_features = 1440
+    out_features = 100
+
+    # maybe there should be normalization or activation here?
+
+
+[model.crnn.rnn]
+    type = 'gru'
+    input_size = 100
+    hidden_size = 100
+    num_layers = 2
+    batch_first = true
+
+
+[[model.crnn.classifier]]
+    type = 'linear'
+    in_features = 100
+    out_features = 64
+
+    [[model.crnn.classifier]]
+    type = 'tanh'
+
+    [[model.crnn.classifier]]
+    type = 'linear'
+    in_features = 64
+    out_features = 110 # number of labels in the dataset

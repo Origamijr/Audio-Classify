@@ -23,6 +23,7 @@ class H5SpecSeqDataset(Dataset):
             dfs += [pd.read_hdf(hdf_file, key=label)]
         self.df = pd.concat(dfs, ignore_index=True)
 
+        # TODO Data normalization?
         self.transform = transform
 
     
