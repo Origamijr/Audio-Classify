@@ -9,11 +9,12 @@ class LayerFactory:
     def __init__(self, layer_fun, **kwargs):
         self.f = layer_fun
         self.kwargs = kwargs
+        self.make = self._make
 
         # filter out only the kwargs needed for the layer function
         sig = inspect.signature(self.f)
         filter_keys = [param.name for param in sig.parameters.values() if param.kind == param.POSITIONAL_OR_KEYWORD]
-        self.f_kwargs = {filter_key: self.kwargs[filter_key] for filter_key in filter_keys}
+        self.f_kwargs = {filter_key: self.kwargs[filter_key] for filter_key in filter_keys if filter_key in self.kwargs}
 
     class InvalidLayer(Exception):
         pass
@@ -34,9 +35,10 @@ class LayerFactory:
             raise LayerFactory.InvalidLayer()
         return LayerFactory(f, **conf).make()
 
-    def make(self):
+    def _make(self):
         """
         Outputs a layer
+        "Overrides" static make when called on an instance
         """
         layer = self.f(**self.f_kwargs)
         # TODO handle weight initialization here
@@ -48,8 +50,9 @@ class ResidualCell(nn.Module):
     Simple pre-activation residual cell with no batch normalization
     """
     def __init__(self, module_params):
+        super(ResidualCell, self).__init__()
         layers = parse_config(module_params)
-        self.cell = nn.Sequential(layers)
+        self.cell = nn.Sequential(*layers)
 
     def forward(self, x):
         return x + self.cell(x)

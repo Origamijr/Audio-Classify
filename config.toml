@@ -53,10 +53,11 @@ shuffle = true
 
 
 [model]
+stub = false
 [[model.convolutional_encoder]]
 type = 'conv2d'
-input_channels = 1
-output_channels = 100
+in_channels = 1
+out_channels = 100
 kernel_size = [5, 5]
 stride = [1, 1]
 padding = [2, 2]
@@ -67,8 +68,8 @@ type = 'relu'
 
 [[model.convolutional_encoder]]
 type = 'conv2d'
-input_channels = 100
-output_channels = 100
+in_channels = 100
+out_channels = 100
 kernel_size = [5, 5]
 stride = [1, 1]
 padding = [2, 2]
@@ -79,8 +80,8 @@ type = 'relu'
 
 [[model.convolutional_encoder]]
 type = 'conv2d'
-input_channels = 100
-output_channels = 100
+in_channels = 100
+out_channels = 100
 kernel_size = [3, 3]
 stride = [2, 2]
 padding = [1, 1]
@@ -97,8 +98,9 @@ repeat = 5
     type = 'relu'
 
     [[model.convolutional_encoder.cell]]
-    input_channels = 100
-    output_channels = 100
+    type = 'conv2d'
+    in_channels = 100
+    out_channels = 100
     kernel_size = [3, 3]
     stride = [2, 2]
     padding = [1, 1]
@@ -108,8 +110,9 @@ repeat = 5
     type = 'relu'
 
     [[model.convolutional_encoder.cell]]
-    input_channels = 100
-    output_channels = 100
+    type = 'conv2d'
+    in_channels = 100
+    out_channels = 100
     kernel_size = [3, 3]
     stride = [2, 2]
     padding = [1, 1]

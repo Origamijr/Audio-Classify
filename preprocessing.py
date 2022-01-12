@@ -100,7 +100,7 @@ def process_files(dbdir=CONFIG['preprocessing']['source'], file_cap=None, min_se
     dfs = []
     mu = MovingAverage()
     with tqdm(files, desc='Computing Features', smoothing=0.1) as pbar:
-        for f in pbar:
+        for i, f in enumerate(pbar):
             try:
                 # Get features from file
                 _df = process_file(f)
