@@ -48,10 +48,21 @@ padding = true
 
 
 [training]
-batch_size = 4
+train_val_test_split = [0.7, 0.1, 0.2]
+split_seed = 42
+batch_size = 16
+eval_batch_size = 128
 shuffle = true
-max_epochs = 100
+max_epochs = 5
+enable_logging = false
 log_dir = './logs/'
+model_dir = './models/' # TODO not implemented yet
+
+[training.optimizer]
+type = 'adam' # hard coded, does nothing for now
+lr = 1e-3
+#momentum = 0.9
+amsgrad = true
 
 
 # Convolutional Encoder processes 2d spectrogram into

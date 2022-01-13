@@ -1,6 +1,8 @@
 import torch.nn as nn
 import inspect
 
+from utilities import filter_kwargs
+
 
 class LayerFactory:
     """
@@ -12,12 +14,7 @@ class LayerFactory:
         self.make = self._make
 
         # filter out only the kwargs needed for the layer function
-        """
-        sig = inspect.signature(self.f)
-        filter_keys = [param.name for param in sig.parameters.values() if param.kind == param.POSITIONAL_OR_KEYWORD]
-        self.f_kwargs = {filter_key: self.kwargs[filter_key] for filter_key in filter_keys if filter_key in self.kwargs}
-        """
-        self.f_kwargs = {key: self.kwargs[key] for key in self.kwargs if key not in ['type', 'repeat']}
+        self.f_kwargs = filter_kwargs(self.kwargs, exclude=['type', 'repeat'])
 
     class InvalidLayer(Exception):
         pass

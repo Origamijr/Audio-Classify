@@ -35,6 +35,7 @@ class CRNN_Classifier(nn.Module):
         self.rnn = LayerFactory.make(self.rnn_params)
         self.classifier = nn.Sequential(*parse_config(clsf_params))
         self.init_hidden = nn.Parameter(torch.randn(self.rnn_params['num_layers'], self.rnn_params['hidden_size']), requires_grad=True)
+        self.loss = nn.CrossEntropyLoss()
 
     def forward(self, x, x_lens=None, h0=None):
         batch_size = x.shape[0]
