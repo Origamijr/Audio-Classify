@@ -115,7 +115,7 @@ def process_files(dbdir=CONFIG['preprocessing']['source'], file_cap=None, min_se
                     pbar.set_postfix(valid=mu.add(1))
 
                 # Add file path as a column
-                _df['file'] = [os.path.relpath(f, dbdir)]
+                _df['file'] = [os.path.relpath(f, dbdir).replace("\\","/")]
 
                 dfs += [_df]
             except Exception as e:
@@ -129,10 +129,10 @@ def get_directory(path, pos=CONFIG['preprocessing']['category_level']):
     """
     get directory at specified position from a path
     """
-    return os.path.normpath(path).split(os.path.sep)[pos]
+    return os.path.normpath(path.replace("\\","/")).split(os.path.sep)[pos]
 
 
-def save_hdf(df, dest=CONFIG['preprocessing']['destination'], min_cat_size=CONFIG['preprocessing']['min_category_count']):
+def save_hdf(df, dest=CONFIG['preprocessing']['destination'], min_cat_size=CONFIG['preprocessing']['min_category_count'], bulk=True):
     """
     save dataframe into an hdf5 file
     """
@@ -142,12 +142,12 @@ def save_hdf(df, dest=CONFIG['preprocessing']['destination'], min_cat_size=CONFI
     # find the categories
     counts = df.apply(lambda x: get_directory(x['file']), axis=1).value_counts()
     categories = pd.DataFrame(counts[counts > min_cat_size].axes[0])[0]
-    categories.to_hdf(dest, key=label_key)
+    categories.to_hdf(dest if bulk else os.path.join(dest, label_key).replace("\\","/"), key=label_key)
 
     # Use a different key per label when saving to file
     for label in tqdm(categories, desc='Saving Dataset', smoothing=0.1):
         filtered_df = df[df.apply(lambda x: get_directory(x['file'], category_level), axis=1) == label]
-        filtered_df.to_hdf(dest, key=label, mode='a')
+        filtered_df.to_hdf(dest if bulk else os.path.join(dest, label).replace("\\","/"), key=label, mode='a')
 
 
 if __name__ == "__main__":
@@ -155,4 +155,4 @@ if __name__ == "__main__":
     df = process_files(dbdir)
 
     dest = CONFIG['preprocessing']['destination']
-    save_hdf(df, dest)
+    save_hdf(df, dest, bulk=False)

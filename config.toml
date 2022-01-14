@@ -50,10 +50,10 @@ padding = true
 [training]
 train_val_test_split = [0.7, 0.1, 0.2]
 split_seed = 42
-batch_size = 16
+batch_size = 64
 eval_batch_size = 128
 shuffle = true
-max_epochs = 5
+max_epochs = 20
 enable_logging = false
 log_dir = './logs/'
 model_dir = './models/' # TODO not implemented yet
@@ -69,7 +69,7 @@ amsgrad = true
 [[model.convolutional_encoder]]
     type = 'conv2d'
     in_channels = 1
-    out_channels = 100
+    out_channels = 32
     kernel_size = [5, 5]
     padding = [2, 2]
 
@@ -77,9 +77,13 @@ amsgrad = true
     type = 'relu'
 
     [[model.convolutional_encoder]]
+    type = 'batchnorm2d'
+    num_features = 32
+
+    [[model.convolutional_encoder]]
     type = 'conv2d'
-    in_channels = 100
-    out_channels = 100
+    in_channels = 32
+    out_channels = 64
     kernel_size = [5, 5]
     stride = [1, 1]
     padding = [2, 2]
@@ -88,9 +92,13 @@ amsgrad = true
     type = 'relu'
 
     [[model.convolutional_encoder]]
+    type = 'batchnorm2d'
+    num_features = 64
+
+    [[model.convolutional_encoder]]
     type = 'conv2d'
-    in_channels = 100
-    out_channels = 100
+    in_channels = 64
+    out_channels = 128
     kernel_size = [3, 3]
     stride = [2, 2]
     padding = [1, 1]
@@ -100,15 +108,19 @@ amsgrad = true
 
     [[model.convolutional_encoder]]
     type = 'residual'
-    repeat = 5
+    repeat = 2
 
         [[model.convolutional_encoder.cell]]
         type = 'relu'
 
         [[model.convolutional_encoder.cell]]
+        type = 'batchnorm2d'
+        num_features = 128
+
+        [[model.convolutional_encoder.cell]]
         type = 'conv2d'
-        in_channels = 100
-        out_channels = 100
+        in_channels = 128
+        out_channels = 128
         kernel_size = [3, 3]
         padding = [1, 1]
 
@@ -116,17 +128,28 @@ amsgrad = true
         type = 'relu'
 
         [[model.convolutional_encoder.cell]]
+        type = 'batchnorm2d'
+        num_features = 128
+
+        [[model.convolutional_encoder.cell]]
         type = 'conv2d'
-        in_channels = 100
-        out_channels = 100
+        in_channels = 128
+        out_channels = 128
         kernel_size = [3, 3]
         padding = [1, 1]
 
     [[model.convolutional_encoder]]
     type = 'conv2d'
-    in_channels = 100
+    in_channels = 128
     out_channels = 1
     kernel_size = [1, 1]
+
+    [[model.convolutional_encoder]]
+    type = 'relu'
+
+    [[model.convolutional_encoder]]
+    type = 'batchnorm2d'
+    num_features = 1
 
     [[model.convolutional_encoder]]
     type = 'flatten'
@@ -135,26 +158,32 @@ amsgrad = true
     [[model.convolutional_encoder]]
     type = 'linear'
     in_features = 1440
-    out_features = 100
+    out_features = 128
 
-    # maybe there should be normalization or activation here?
+    [[model.convolutional_encoder]]
+    type = 'batchnorm1d'
+    num_features = 128
 
 
 [model.crnn.rnn]
     type = 'gru'
-    input_size = 100
-    hidden_size = 100
-    num_layers = 2
+    input_size = 128
+    hidden_size = 128
+    num_layers = 1
     batch_first = true
 
 
 [[model.crnn.classifier]]
     type = 'linear'
-    in_features = 100
+    in_features = 128
     out_features = 64
 
     [[model.crnn.classifier]]
-    type = 'tanh'
+    type = 'batchnorm1d'
+    num_features = 64
+
+    [[model.crnn.classifier]]
+    type = 'relu'
 
     [[model.crnn.classifier]]
     type = 'linear'

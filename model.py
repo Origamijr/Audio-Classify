@@ -45,7 +45,6 @@ class CRNN_Classifier(nn.Module):
         if h0 is None: h0 = self.init_hidden.unsqueeze(1).repeat(1, batch_size, 1)
 
         # pack sequences to optimize the handling of varing lengths
-        # check if x_lens should be on cpu or be a list. Consider sorted in future
         packed_x = pack_padded_sequence(x, x_lens, batch_first=True, enforce_sorted=False)
 
         # perform encoding on the non-padding data

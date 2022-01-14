@@ -1,3 +1,4 @@
+import os
 import torch
 import pandas as pd
 from torch.utils import data
@@ -12,14 +13,14 @@ class H5SpecSeqDataset(Dataset):
     Dataset for sequences of 2D features from an HDF5 file
     """
 
-    def __init__(self, hdf_file=CONFIG['preprocessing']['destination'], transform=None):
+    def __init__(self, hdf_file=CONFIG['preprocessing']['destination'], bulk=True, transform=None):
         label_key = CONFIG['preprocessing']['hdf_label_key']
 
-        self.labels = pd.read_hdf(hdf_file, key=label_key)
+        self.labels = pd.read_hdf(hdf_file if bulk else os.path.join(hdf_file, label_key), key=label_key)
         
         dfs = []
         for label in tqdm(self.labels, desc='Reading Dataset', smoothing=0.1):
-            dfs += [pd.read_hdf(hdf_file, key=label)]
+            dfs += [pd.read_hdf(hdf_file if bulk else os.path.join(hdf_file, label_key), key=label)]
         self.df = pd.concat(dfs, ignore_index=True)
 
         # TODO Data normalization?

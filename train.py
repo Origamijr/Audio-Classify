@@ -4,11 +4,14 @@ import torch.optim as optim
 from torch.utils.data import Dataset, DataLoader
 from torch.nn.utils.rnn import pad_sequence
 from torch.utils.tensorboard import SummaryWriter
-from tqdm import tqdm
-from tqdm.std import trange
 
 from dataset import split_dataset
-from utilities import MovingAverage, filter_kwargs
+from utilities import MovingAverage, filter_kwargs, is_interactive
+
+if is_interactive():
+    from tqdm.notebook import tqdm, trange
+else:
+    from tqdm import tqdm
 
 from config import CONFIG
 
@@ -27,6 +30,7 @@ def train(model: nn.Module, dataset: Dataset):
 
     # enable cuda if available
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
+    print("Using {} device".format(device))
     model.to(device)
 
     # generate data split and corresponding dataloaders
@@ -42,7 +46,9 @@ def train(model: nn.Module, dataset: Dataset):
     if logging: writer = SummaryWriter(log_dir)
 
     # main training loop
-    with trange(max_epochs, unit='epoch') as pbar:
+    losses = []
+    accs = []
+    with tqdm(range(max_epochs), unit='epoch') as pbar:
         for epoch in trange(max_epochs):
             # Train on training data
             train_loss, train_acc = train_on_data(model, train_loader, optimizer)
@@ -51,12 +57,15 @@ def train(model: nn.Module, dataset: Dataset):
             val_loss, val_acc = evaluate_on_data(model, val_loader)
 
             # Log data
+            losses.append((train_loss, val_loss))
+            accs.append((train_acc, val_acc))
             if logging: 
                 writer.add_scalar('loss/train', train_loss, epoch)
                 writer.add_scalar('acc/train', train_acc, epoch)
                 writer.add_scalar('loss/val', val_loss, epoch)
                 writer.add_scalar('acc/val', val_acc, epoch)
             pbar.set_postfix(train_loss=train_loss, train_acc=train_acc, val_loss=val_loss, val_acc=val_acc)
+    return losses, accs
 
 
 def pad_x_collate(device):
@@ -66,9 +75,9 @@ def pad_x_collate(device):
     """
     def _pad_x_collate(batch):
         (xx, yy) = zip(*batch)
-        x_lens = torch.tensor([len(x) for x in xx]).to(device)
+        x_lens = torch.tensor([len(x) for x in xx])
 
-        xx = [torch.tensor(x)[:, None, :, :] for x in xx]
+        xx = [x[:, None, :, :] for x in xx]
         xx_pad = pad_sequence(xx, batch_first=True, padding_value=0).to(device)
 
         yy = torch.tensor(yy).to(device)
@@ -141,8 +150,12 @@ def evaluate_on_data(model: nn.Module, dataloader: DataLoader):
 if __name__ == "__main__":
     from dataset import H5SpecSeqDataset
     from model import CRNN_Classifier
-
-    dataset = H5SpecSeqDataset()
+    from torchvision.transforms import Normalize, Compose, ToTensor
+    data_transform = Compose([
+            ToTensor(),
+            Normalize(-80, 40)
+        ])
+    dataset = H5SpecSeqDataset(transform=data_transform)
     model = CRNN_Classifier()
 
     train(model, dataset)

@@ -35,6 +35,12 @@ class LayerFactory:
             f = nn.ReLU
         elif type == 'tanh':
             f = nn.Tanh
+        elif type == 'batchnorm1d':
+            f = nn.BatchNorm1d
+        elif type == 'batchnorm2d':
+            f = nn.BatchNorm2d
+        elif type == 'layernorm':
+            f = nn.LayerNorm
         elif type == 'flatten':
             f = nn.Flatten
         else:

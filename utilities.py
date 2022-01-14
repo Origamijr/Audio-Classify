@@ -3,6 +3,11 @@ import inspect
 from config import CONFIG
 
 
+def is_interactive():
+    import __main__ as main
+    return not hasattr(main, '__file__')
+
+
 def show_spectrogram(s):
     librosa.display.specshow(s,sr=CONFIG['preprocessing']['sr'])
 
@@ -35,3 +40,6 @@ def filter_kwargs(kwargs, exclude=None, adapt_f=None):
     if exclude is not None:
         kwargs = {key: kwargs[key] for key in kwargs if key not in exclude}
     return kwargs
+
+if __name__ == "__main__":
+    print(is_interactive())
