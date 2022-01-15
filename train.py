@@ -1,9 +1,13 @@
+import os
+from pathlib import Path
+from datetime import datetime
 import torch
 import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import Dataset, DataLoader
 from torch.nn.utils.rnn import pad_sequence
 from torch.utils.tensorboard import SummaryWriter
+import toml
 
 from dataset import split_dataset
 from utilities import MovingAverage, filter_kwargs, is_interactive
@@ -15,7 +19,7 @@ else:
 
 from config import CONFIG
 
-def train(model: nn.Module, dataset: Dataset, max_epochs=None):
+def train(model: nn.Module, dataset: Dataset, max_epochs=None, load_checkpoint=None):
     """
     Sets up and performs the main training loop
     """
@@ -27,6 +31,8 @@ def train(model: nn.Module, dataset: Dataset, max_epochs=None):
     optimizer_params = CONFIG['training']['optimizer']
     logging = CONFIG['training']['enable_logging']
     log_dir = CONFIG['training']['log_dir']
+    save_freq = CONFIG['training']['save_freq']
+    save_dest = CONFIG['training']['model_dir']
 
     # enable cuda if available
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -43,13 +49,32 @@ def train(model: nn.Module, dataset: Dataset, max_epochs=None):
     optimizer = optim.Adam(model.parameters(), **filter_kwargs(optimizer_params, adapt_f=optim.Adam))
 
     # Setup logging
-    if logging: writer = SummaryWriter(log_dir)
+    time_str = load_checkpoint if load_checkpoint else datetime.now().strftime('%Y_%m_%d_%H_%M')
+    save_dest = save_dest + '/' + time_str
+    Path(save_dest).mkdir(parents=True, exist_ok=True)
+    with open(save_dest + '/config.toml', 'w') as config_file:
+        toml.dump({'training': CONFIG['training'], 'model': CONFIG['model']}, config_file)
+    if logging: writer = SummaryWriter(log_dir + '/' + time_str)
+
+    # Load from checkpoint if provided
+    start_epoch = 1
+    if load_checkpoint:
+        last_epoch = 0
+        for file in os.listdir(save_dest):
+            if file.endswith(".pt"):
+                last_epoch = max(last_epoch, int(file.split('.')[0]))
+        checkpoint = torch.load(f'{save_dest}/{last_epoch}.pt', map_location=device)
+        model.load_state_dict(checkpoint['model_state_dict'])
+        optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+        start_epoch = last_epoch + 1
 
     # main training loop
     losses = []
     accs = []
-    with tqdm(range(max_epochs), unit='epoch') as pbar:
-        for epoch in trange(max_epochs):
+    with tqdm(range(start_epoch, max_epochs + 1), desc=f'Epoch {start_epoch}', unit='epoch') as pbar:
+        for epoch in pbar:
+            pbar.set_description_str(f'Epoch {epoch}')
+
             # Train on training data
             train_loss, train_acc = train_on_data(model, train_loader, optimizer)
 
@@ -64,6 +89,8 @@ def train(model: nn.Module, dataset: Dataset, max_epochs=None):
                 writer.add_scalar('acc/train', train_acc, epoch)
                 writer.add_scalar('loss/val', val_loss, epoch)
                 writer.add_scalar('acc/val', val_acc, epoch)
+            if epoch % save_freq == 0:
+                torch.save({'epoch': epoch, 'model_state_dict': model.state_dict(), 'optimizer_state_dict': optimizer.state_dict()}, save_dest + f'/{epoch}.pt')
             pbar.set_postfix(train_loss=train_loss, train_acc=train_acc, val_loss=val_loss, val_acc=val_acc)
     return losses, accs
 
@@ -149,17 +176,14 @@ def evaluate_on_data(model: nn.Module, dataloader: DataLoader):
     return total_loss.value, total_accuracy.value
 
 
-
-
 if __name__ == "__main__":
     from dataset import H5SpecSeqDataset
     from model import CRNN_Classifier
-    from torchvision.transforms import Normalize, Compose, ToTensor
-    data_transform = Compose([
-            ToTensor(),
-            Normalize(-80, 40)
-        ])
+    from torchvision.transforms import Normalize, Compose
+
+    data_transform = Compose([torch.tensor, Normalize(-57.6, 19)])
     dataset = H5SpecSeqDataset(transform=data_transform)
+    
     model = CRNN_Classifier()
 
     train(model, dataset)

@@ -5,7 +5,7 @@ source = "../datasets/vctk/VCTK-Corpus-0.92/wav48_silence_trimmed"
 category_level = 0 # distance from source to category folder level
 
 # Output Settings
-destination = "dataset/vctk/mel_22050_2048_512_80_72_36.h5"
+destination = "dataset/vctk/mel_22050_2048_512_80_72_36"
 hdf_label_key = 'keys'
 
 # Preprocessing Parameters
@@ -53,10 +53,11 @@ split_seed = 42
 batch_size = 128
 eval_batch_size = 128
 shuffle = true
-max_epochs = 20
-enable_logging = false
-log_dir = './logs/'
-model_dir = './models/' # TODO not implemented yet
+max_epochs = 901
+enable_logging = true
+log_dir = "drive/My Drive/code/audio_classify/logs"
+save_freq = 30
+model_dir = "drive/My Drive/code/audio_classify/models"
 
 [training.optimizer]
 type = 'adam' # hard coded, does nothing for now
@@ -128,8 +129,8 @@ amsgrad = true
             type = 'conv1d'
             in_channels = 256
             out_channels = 256
-            kernel_size = 5
-            padding = 2
+            kernel_size = 3
+            padding = 1
 
     [[model.1d_convolutional_encoder.stack]]
     type = 'relu'

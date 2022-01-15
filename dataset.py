@@ -16,11 +16,11 @@ class H5SpecSeqDataset(Dataset):
     def __init__(self, hdf_file=CONFIG['preprocessing']['destination'], bulk=True, transform=None):
         label_key = CONFIG['preprocessing']['hdf_label_key']
 
-        self.labels = pd.read_hdf(hdf_file if bulk else os.path.join(hdf_file, label_key), key=label_key)
+        self.labels = pd.read_hdf(hdf_file + '.h5' if bulk else os.path.join(hdf_file, label_key), key=label_key)
         
         dfs = []
         for label in tqdm(self.labels, desc='Reading Dataset', smoothing=0.1):
-            dfs += [pd.read_hdf(hdf_file if bulk else os.path.join(hdf_file, label_key), key=label)]
+            dfs += [pd.read_hdf(hdf_file + '.h5' if bulk else os.path.join(hdf_file, label_key), key=label)]
         self.df = pd.concat(dfs, ignore_index=True)
         self.transform = transform
 

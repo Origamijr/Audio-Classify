@@ -142,12 +142,12 @@ def save_hdf(df, dest=CONFIG['preprocessing']['destination'], min_cat_size=CONFI
     # find the categories
     counts = df.apply(lambda x: get_directory(x['file']), axis=1).value_counts()
     categories = pd.DataFrame(counts[counts > min_cat_size].axes[0])[0]
-    categories.to_hdf(dest if bulk else os.path.join(dest, label_key).replace("\\","/"), key=label_key)
+    categories.to_hdf(dest + '.h5' if bulk else os.path.join(dest, label_key).replace("\\","/"), key=label_key)
 
     # Use a different key per label when saving to file
     for label in tqdm(categories, desc='Saving Dataset', smoothing=0.1):
         filtered_df = df[df.apply(lambda x: get_directory(x['file'], category_level), axis=1) == label]
-        filtered_df.to_hdf(dest if bulk else os.path.join(dest, label).replace("\\","/"), key=label, mode='a')
+        filtered_df.to_hdf(dest + '.h5' if bulk else os.path.join(dest, label).replace("\\","/"), key=label, mode='a')
 
 
 if __name__ == "__main__":
