@@ -15,7 +15,7 @@ else:
 
 from config import CONFIG
 
-def train(model: nn.Module, dataset: Dataset):
+def train(model: nn.Module, dataset: Dataset, max_epochs=None):
     """
     Sets up and performs the main training loop
     """
@@ -23,7 +23,7 @@ def train(model: nn.Module, dataset: Dataset):
     batch_size = CONFIG['training']['batch_size']
     eval_batch_size = CONFIG['training']['eval_batch_size']
     shuffle = CONFIG['training']['shuffle']
-    max_epochs = CONFIG['training']['max_epochs']
+    if max_epochs is None: max_epochs = CONFIG['training']['max_epochs'] 
     optimizer_params = CONFIG['training']['optimizer']
     logging = CONFIG['training']['enable_logging']
     log_dir = CONFIG['training']['log_dir']
@@ -68,7 +68,7 @@ def train(model: nn.Module, dataset: Dataset):
     return losses, accs
 
 
-def pad_x_collate(device):
+def pad_x_collate(device, add_channel=False):
     """
     Convert data to tensors and pad input sequences to be the length of the longest sequence.
     Corresponding sequence lengths are also returned to keep information on original length.
@@ -77,7 +77,7 @@ def pad_x_collate(device):
         (xx, yy) = zip(*batch)
         x_lens = torch.tensor([len(x) for x in xx])
 
-        xx = [x[:, None, :, :] for x in xx]
+        if add_channel: xx = [x[:, None, :, :] for x in xx]
         xx_pad = pad_sequence(xx, batch_first=True, padding_value=0).to(device)
 
         yy = torch.tensor(yy).to(device)
@@ -101,6 +101,8 @@ def train_on_data(model: nn.Module, dataloader: DataLoader, optimizer: optim.Opt
     """
     total_loss = MovingAverage()
     total_accuracy = MovingAverage()
+    weighted_loss = MovingAverage(alpha=0.2)
+    weighted_accuracy = MovingAverage(alpha=0.2)
     model.train()
     with tqdm(dataloader, desc='Training', unit='batch', leave=False) as pbar:
         for x, y, x_len in pbar:
@@ -116,8 +118,10 @@ def train_on_data(model: nn.Module, dataloader: DataLoader, optimizer: optim.Opt
 
             # Compute metrics
             total_loss.add(loss.item(), count=batch_size)
+            weighted_loss.add(loss.item())
             total_accuracy.add(compute_accuracy(y_pred, y), count=batch_size)
-            pbar.set_postfix(loss=total_loss.value, acc=total_accuracy.value)
+            weighted_accuracy.add(compute_accuracy(y_pred, y))
+            pbar.set_postfix(loss=total_loss.value, acc=total_accuracy.value, w_loss=weighted_loss.value, w_acc=weighted_accuracy.value)
     return total_loss.value, total_accuracy.value
 
 

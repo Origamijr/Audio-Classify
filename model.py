@@ -14,12 +14,32 @@ class ConvolutionalEncoder(nn.Module):
     def __init__(self):
         super(ConvolutionalEncoder, self).__init__()
 
-        module_params = CONFIG['model']['convolutional_encoder']
+        module_params = CONFIG['model']['2d_convolutional_encoder']
         
         self.encoder = nn.Sequential(*parse_config(module_params))
 
     def forward(self, x):
         return self.encoder(x)
+
+
+class ConvolutionalEncoder1D(nn.Module):
+    """
+    CNN stack to convert 2D input to a 1-dimensional embedding by convolutions along the x dimension
+    """
+    def __init__(self):
+        super(ConvolutionalEncoder1D, self).__init__()
+
+        module_params = CONFIG['model']['1d_convolutional_encoder']
+        
+        self.stack = nn.Sequential(*parse_config(module_params['stack']))
+        self.embedding = nn.Sequential(*parse_config(module_params['embedding']))
+
+    def forward(self, x):
+        x = self.stack(x)
+        batch_size = x.shape[0]
+        x = x.view(batch_size, -1)
+        x = self.embedding(x)
+        return x
 
 
 class CRNN_Classifier(nn.Module):
@@ -31,7 +51,7 @@ class CRNN_Classifier(nn.Module):
         
         self.rnn_params = CONFIG['model']['crnn']['rnn']
         clsf_params = CONFIG['model']['crnn']['classifier']
-        self.cnn = ConvolutionalEncoder()
+        self.cnn = ConvolutionalEncoder1D()
         self.rnn = LayerFactory.make(self.rnn_params)
         self.classifier = nn.Sequential(*parse_config(clsf_params))
         self.init_hidden = nn.Parameter(torch.randn(self.rnn_params['num_layers'], self.rnn_params['hidden_size']), requires_grad=True)

@@ -22,8 +22,6 @@ class H5SpecSeqDataset(Dataset):
         for label in tqdm(self.labels, desc='Reading Dataset', smoothing=0.1):
             dfs += [pd.read_hdf(hdf_file if bulk else os.path.join(hdf_file, label_key), key=label)]
         self.df = pd.concat(dfs, ignore_index=True)
-
-        # TODO Data normalization?
         self.transform = transform
 
     
